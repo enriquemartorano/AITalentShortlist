@@ -1,4 +1,5 @@
-﻿using TalentShortlist.Application.Contracts;
+﻿using System.Diagnostics;
+using TalentShortlist.Application.Contracts;
 using TalentShortlist.Application.Services;
 using TalentShortlist.Infrastructure.Demo;
 using TalentShortlist.Infrastructure.Repositories;
@@ -19,6 +20,7 @@ builder.Services.AddSingleton<ICandidateEvaluator, DeterministicCandidateEvaluat
 builder.Services.AddSingleton<IAiCandidateEvaluator>(serviceProvider =>
     new OpenAiCandidateEvaluator(
         serviceProvider.GetRequiredService<ICandidateEvaluator>(),
+        serviceProvider.GetRequiredService<ILogger<OpenAiCandidateEvaluator>>(),
         new OpenAiSettings
         {
             ApiKey = builder.Configuration["OpenAI:ApiKey"] ?? string.Empty,
@@ -30,6 +32,28 @@ builder.Services.AddSingleton<IDemoDataService, DemoDataService>();
 builder.Services.AddScoped<ShortlistService>();
 
 var app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+    var startedAt = Stopwatch.GetTimestamp();
+
+    logger.LogInformation("HTTP {Method} {Path} started", context.Request.Method, context.Request.Path);
+
+    try
+    {
+        await next();
+    }
+    finally
+    {
+        logger.LogInformation(
+            "HTTP {Method} {Path} completed with {StatusCode} in {ElapsedMilliseconds:0} ms",
+            context.Request.Method,
+            context.Request.Path,
+            context.Response.StatusCode,
+            Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds);
+    }
+});
 
 app.UseCors("LocalFrontend");
 app.MapControllers();

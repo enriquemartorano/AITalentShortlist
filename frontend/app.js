@@ -20,21 +20,35 @@ const activeModeBadgeEl = document.getElementById('activeModeBadge');
 
 const api = {
   async get(url) {
+    console.info(`[API] GET ${url}`);
     const response = await fetch(`${API_BASE}${url}`);
+    console.info(`[API] GET ${url} -> ${response.status}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   },
   async post(url, body) {
+    console.info(`[API] POST ${url}`, {
+      evaluationMode: body?.evaluationMode,
+      candidateCount: body?.candidateIds?.length
+    });
     const response = await fetch(`${API_BASE}${url}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
+    console.info(`[API] POST ${url} -> ${response.status}`);
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(`[API] POST ${url} failed`, errorText);
       throw new Error(errorText || `HTTP ${response.status}`);
     }
-    return response.json();
+    const result = await response.json();
+    console.info(`[API] POST ${url} response`, {
+      evaluator: result.evaluator,
+      resultCount: result.ranking?.length,
+      durationMilliseconds: result.durationMilliseconds
+    });
+    return result;
   },
   async delete(url) {
     const response = await fetch(`${API_BASE}${url}`, { method: 'DELETE' });
@@ -220,6 +234,10 @@ async function loadCandidates() {
 
 async function evaluateSelection() {
   const selected = [...document.querySelectorAll('#candidateList input:checked')].map((input) => input.value);
+  console.info('[UI] Evaluate selection clicked', {
+    evaluationMode: evaluationModeEl.value,
+    candidateCount: selected.length
+  });
 
   if (!selected.length) {
     alert('Select at least one candidate');
@@ -241,7 +259,9 @@ async function evaluateSelection() {
       evaluationMode
     });
     renderEvaluationResult(result);
+    console.info('[UI] Evaluation results rendered');
   } catch (error) {
+    console.error('[UI] Evaluation failed', error);
     alert(`Evaluation error: ${error.message}`);
   } finally {
     evaluateBtn.disabled = false;

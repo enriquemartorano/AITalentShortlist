@@ -78,20 +78,39 @@ public sealed class CandidatesController(ICandidateRepository repository) : Cont
 
 [ApiController]
 [Route("api/shortlists")]
-public sealed class ShortlistsController(ShortlistService shortlistService) : ControllerBase
+public sealed class ShortlistsController(
+    ShortlistService shortlistService,
+    ILogger<ShortlistsController> logger) : ControllerBase
 {
     [HttpPost("evaluate")]
     public async Task<IActionResult> EvaluateAsync(
         [FromBody] EvaluationRequestDto request,
         CancellationToken cancellationToken)
     {
+        logger.LogInformation(
+            "Evaluation requested with mode {EvaluationMode} for {CandidateCount} candidate IDs",
+            request.EvaluationMode,
+            request.CandidateIds.Count);
+
         try
         {
-            return Ok(await shortlistService.EvaluateAsync(request, cancellationToken));
+            var response = await shortlistService.EvaluateAsync(request, cancellationToken);
+            logger.LogInformation(
+                "Evaluation completed with evaluator {Evaluator}, {ResultCount} results in {DurationMilliseconds} ms",
+                response.Evaluator,
+                response.Ranking.Count,
+                response.DurationMilliseconds);
+            return Ok(response);
         }
         catch (ArgumentException exception)
         {
+            logger.LogWarning(exception, "Evaluation rejected: {Message}", exception.Message);
             return Problem(statusCode: StatusCodes.Status400BadRequest, title: exception.Message);
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Evaluation failed unexpectedly");
+            throw;
         }
     }
 }

@@ -13,6 +13,7 @@ TestResults/
 
 ## Local settings and secrets
 appsettings.Local.json
+talentshortlist-api.log
 .env
 .env.*
 !.env.example

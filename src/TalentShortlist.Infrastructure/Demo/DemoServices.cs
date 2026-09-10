@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using TalentShortlist.Application.Contracts;
 using TalentShortlist.Domain.Entities;
 using TalentShortlist.Domain.Enums;
@@ -56,6 +57,7 @@ public sealed class DemoDataService(ICandidateRepository repository) : IDemoData
 
 public sealed class OpenAiCandidateEvaluator(
     ICandidateEvaluator fallbackEvaluator,
+    ILogger<OpenAiCandidateEvaluator> logger,
     OpenAiSettings settings) : IAiCandidateEvaluator
 {
     public async Task<IReadOnlyList<CandidateAssessment>> EvaluateAsync(
@@ -65,11 +67,19 @@ public sealed class OpenAiCandidateEvaluator(
     {
         if (string.IsNullOrWhiteSpace(settings.ApiKey) || string.IsNullOrWhiteSpace(settings.Model))
         {
+            logger.LogWarning(
+                "AI evaluation fallback: OpenAI configuration is incomplete (key present: {KeyPresent}, model: {Model})",
+                !string.IsNullOrWhiteSpace(settings.ApiKey),
+                settings.Model);
             return await fallbackEvaluator.EvaluateAsync(rankingProfile, candidates, cancellationToken);
         }
 
         try
         {
+            logger.LogInformation(
+                "Starting OpenAI evaluation with model {Model} for {CandidateCount} candidates",
+                settings.Model,
+                candidates.Count);
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.ApiKey);
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -98,6 +108,9 @@ public sealed class OpenAiCandidateEvaluator(
             using var response = await httpClient.PostAsJsonAsync(settings.Endpoint, payload, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
+                logger.LogWarning(
+                    "AI evaluation fallback: OpenAI returned HTTP {StatusCode}",
+                    (int)response.StatusCode);
                 return await fallbackEvaluator.EvaluateAsync(rankingProfile, candidates, cancellationToken);
             }
 
@@ -105,12 +118,14 @@ public sealed class OpenAiCandidateEvaluator(
             var content = result?.Choices?.FirstOrDefault()?.Message?.Content;
             if (string.IsNullOrWhiteSpace(content))
             {
+                logger.LogWarning("AI evaluation fallback: OpenAI returned an empty message");
                 return await fallbackEvaluator.EvaluateAsync(rankingProfile, candidates, cancellationToken);
             }
 
             var parsed = JsonDocument.Parse(content);
             if (!parsed.RootElement.TryGetProperty("candidates", out var candidatesElement) || candidatesElement.ValueKind != JsonValueKind.Array)
             {
+                logger.LogWarning("AI evaluation fallback: OpenAI response did not contain a candidates array");
                 return await fallbackEvaluator.EvaluateAsync(rankingProfile, candidates, cancellationToken);
             }
 
@@ -157,16 +172,19 @@ public sealed class OpenAiCandidateEvaluator(
 
             if (mapped.Count == 0)
             {
+                logger.LogWarning("AI evaluation fallback: OpenAI response contained no usable candidates");
                 return await fallbackEvaluator.EvaluateAsync(rankingProfile, candidates, cancellationToken);
             }
 
+            logger.LogInformation("OpenAI evaluation completed with {ResultCount} results", mapped.Count);
             return mapped
                 .OrderByDescending(candidate => candidate.TotalScore)
                 .ThenBy(candidate => candidate.CandidateName, StringComparer.Ordinal)
                 .ToArray();
         }
-        catch
+        catch (Exception exception)
         {
+            logger.LogError(exception, "AI evaluation failed; using heuristic fallback");
             return await fallbackEvaluator.EvaluateAsync(rankingProfile, candidates, cancellationToken);
         }
     }
