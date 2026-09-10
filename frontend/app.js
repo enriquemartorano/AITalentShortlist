@@ -44,12 +44,13 @@ const api = {
       throw new Error(errorText || `HTTP ${response.status}`);
     }
     const result = await response.json();
+    const effectiveEvaluator = result.effectiveEvaluator ?? result.EffectiveEvaluator ?? result.evaluator ?? result.Evaluator ?? 'Unknown';
     console.info(`[API] POST ${url} response`, {
-      evaluator: result.effectiveEvaluator,
+      evaluator: effectiveEvaluator,
       resultCount: result.ranking?.length,
       durationMilliseconds: result.durationMilliseconds
     });
-    return result;
+    return { ...result, effectiveEvaluator };
   },
   async delete(url) {
     const response = await fetch(`${API_BASE}${url}`, { method: 'DELETE' });

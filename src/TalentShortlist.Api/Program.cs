@@ -7,6 +7,7 @@ using TalentShortlist.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false);
+builder.Configuration.AddUserSecrets<Program>(optional: true);
 
 builder.Services.AddControllers()
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
