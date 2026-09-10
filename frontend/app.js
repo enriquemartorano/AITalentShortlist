@@ -10,6 +10,7 @@ const jobDescriptionEl = document.getElementById('jobDescription');
 const rankingProfileEl = document.getElementById('rankingProfile');
 const candidateListEl = document.getElementById('candidateList');
 const evaluationResultEl = document.getElementById('evaluationResult');
+const evaluationStatusEl = document.getElementById('evaluationStatus');
 
 const seedBtn = document.getElementById('seedBtn');
 const loadCandidatesBtn = document.getElementById('loadCandidatesBtn');
@@ -61,6 +62,11 @@ function updateActiveModeBadge() {
   activeModeBadgeEl.textContent = `Running: ${isAi ? 'AI' : 'Heuristic'}`;
   activeModeBadgeEl.classList.toggle('ai', isAi);
   activeModeBadgeEl.classList.toggle('heuristic', !isAi);
+}
+
+function updateEvaluationStatus(message, isError = false) {
+  evaluationStatusEl.innerHTML = `<strong>Activity:</strong> ${message}`;
+  evaluationStatusEl.classList.toggle('error', isError);
 }
 
 function renderJobDescription() {
@@ -234,10 +240,12 @@ async function loadCandidates() {
 
 async function evaluateSelection() {
   const selected = [...document.querySelectorAll('#candidateList input:checked')].map((input) => input.value);
+  const evaluationMode = evaluationModeEl.value === 'ai' ? 'AI' : 'Heuristic';
   console.info('[UI] Evaluate selection clicked', {
-    evaluationMode: evaluationModeEl.value,
+    evaluationMode,
     candidateCount: selected.length
   });
+  updateEvaluationStatus(`Sending ${evaluationMode} evaluation request for ${selected.length} candidates...`);
 
   if (!selected.length) {
     alert('Select at least one candidate');
@@ -251,7 +259,6 @@ async function evaluateSelection() {
 
   evaluateBtn.disabled = true;
   try {
-    const evaluationMode = evaluationModeEl.value === 'ai' ? 'Ai' : 'Heuristic';
     const result = await api.post('/api/shortlists/evaluate', {
       jobDescription: state.jobDescription,
       rankingProfile: state.rankingProfile,
@@ -259,9 +266,11 @@ async function evaluateSelection() {
       evaluationMode
     });
     renderEvaluationResult(result);
+    updateEvaluationStatus(`Response received: HTTP 200. Evaluator: ${result.evaluator}. Results: ${result.ranking?.length ?? 0}. Duration: ${result.durationMilliseconds} ms.`);
     console.info('[UI] Evaluation results rendered');
   } catch (error) {
     console.error('[UI] Evaluation failed', error);
+    updateEvaluationStatus(`Request failed: ${error.message}`, true);
     alert(`Evaluation error: ${error.message}`);
   } finally {
     evaluateBtn.disabled = false;
