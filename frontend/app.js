@@ -16,6 +16,7 @@ const loadCandidatesBtn = document.getElementById('loadCandidatesBtn');
 const clearCandidatesBtn = document.getElementById('clearCandidatesBtn');
 const evaluateBtn = document.getElementById('evaluateBtn');
 const evaluationModeEl = document.getElementById('evaluationMode');
+const activeModeBadgeEl = document.getElementById('activeModeBadge');
 
 const api = {
   async get(url) {
@@ -40,6 +41,13 @@ const api = {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
   }
 };
+
+function updateActiveModeBadge() {
+  const isAi = evaluationModeEl.value === 'ai';
+  activeModeBadgeEl.textContent = `Running: ${isAi ? 'AI' : 'Heuristic'}`;
+  activeModeBadgeEl.classList.toggle('ai', isAi);
+  activeModeBadgeEl.classList.toggle('heuristic', !isAi);
+}
 
 function renderJobDescription() {
   if (!state.jobDescription) {
@@ -244,6 +252,8 @@ seedBtn.addEventListener('click', loadDemoData);
 loadCandidatesBtn.addEventListener('click', loadCandidates);
 clearCandidatesBtn.addEventListener('click', clearCandidates);
 evaluateBtn.addEventListener('click', evaluateSelection);
+evaluationModeEl.addEventListener('change', updateActiveModeBadge);
+updateActiveModeBadge();
 
 (async () => {
   try {
