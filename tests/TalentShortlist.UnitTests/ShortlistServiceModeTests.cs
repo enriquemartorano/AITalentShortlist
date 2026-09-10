@@ -40,7 +40,8 @@ public sealed class ShortlistServiceModeTests
         var result = await service.EvaluateAsync(request, CancellationToken.None);
 
         Assert.NotNull(result);
-        Assert.Equal("DeterministicCandidateEvaluator", result.Evaluator);
+        Assert.Equal("DeterministicCandidateEvaluator", result.EffectiveEvaluator);
+        Assert.False(result.FallbackUsed);
     }
 
     [Fact]
@@ -72,12 +73,44 @@ public sealed class ShortlistServiceModeTests
         var result = await service.EvaluateAsync(request, CancellationToken.None);
 
         Assert.NotNull(result);
-        Assert.Equal("OpenAiCandidateEvaluator", result.Evaluator);
+        Assert.Equal("OpenAI", result.EffectiveEvaluator);
+        Assert.False(result.FallbackUsed);
+    }
+
+    [Fact]
+    public async Task EvaluateAsync_UsesHeuristicFallbackAndReportsIt_WhenAiFails()
+    {
+        var repo = new InMemoryCandidateRepository();
+        var candidate = new CandidateDocument
+        {
+            CandidateName = "Fallback candidate",
+            ExtractedText = "SharePoint Online and Power Platform."
+        };
+        await repo.AddAsync(candidate, CancellationToken.None);
+
+        var service = new ShortlistService(repo, new DeterministicCandidateEvaluator(), new FailingAiCandidateEvaluator());
+        var request = new EvaluationRequestDto
+        {
+            EvaluationMode = EvaluationMode.Ai,
+            RankingProfile = new RankingProfile
+            {
+                Criteria = [new() { Name = "Platform", Weight = 100, Keywords = ["SharePoint Online"] }]
+            },
+            CandidateIds = [candidate.Id]
+        };
+
+        var result = await service.EvaluateAsync(request, CancellationToken.None);
+
+        Assert.Equal(EvaluationMode.Ai, result.RequestedMode);
+        Assert.Equal("DeterministicCandidateEvaluator", result.EffectiveEvaluator);
+        Assert.True(result.FallbackUsed);
+        Assert.Equal("OpenAI is unavailable.", result.FallbackReason);
     }
 
     private sealed class FakeAiCandidateEvaluator : IAiCandidateEvaluator
     {
         public Task<IReadOnlyList<CandidateAssessment>> EvaluateAsync(
+            JobDescription jobDescription,
             RankingProfile rankingProfile,
             IReadOnlyCollection<CandidateDocument> candidates,
             CancellationToken cancellationToken)
@@ -101,5 +134,15 @@ public sealed class ShortlistServiceModeTests
 
             return Task.FromResult<IReadOnlyList<CandidateAssessment>>(result);
         }
+    }
+
+    private sealed class FailingAiCandidateEvaluator : IAiCandidateEvaluator
+    {
+        public Task<IReadOnlyList<CandidateAssessment>> EvaluateAsync(
+            JobDescription jobDescription,
+            RankingProfile rankingProfile,
+            IReadOnlyCollection<CandidateDocument> candidates,
+            CancellationToken cancellationToken) =>
+            throw new OpenAiEvaluationException(503, "configuration_error", "not_configured", "OpenAI is unavailable.");
     }
 }

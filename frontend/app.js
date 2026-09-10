@@ -45,7 +45,7 @@ const api = {
     }
     const result = await response.json();
     console.info(`[API] POST ${url} response`, {
-      evaluator: result.evaluator,
+      evaluator: result.effectiveEvaluator,
       resultCount: result.ranking?.length,
       durationMilliseconds: result.durationMilliseconds
     });
@@ -188,7 +188,9 @@ function renderEvaluationResult(result) {
   evaluationResultEl.innerHTML = `
     <div class="result-box">
       <div><strong>Time:</strong> ${result.durationMilliseconds} ms</div>
-      <div><strong>Evaluator:</strong> ${result.evaluator}</div>
+      <div><strong>Requested mode:</strong> ${result.requestedMode}</div>
+      <div><strong>Effective evaluator:</strong> ${result.effectiveEvaluator}</div>
+      ${result.fallbackUsed ? `<div class="fallback-warning"><strong>Fallback used:</strong> ${result.fallbackReason || 'OpenAI evaluation was unavailable.'}</div>` : ''}
       ${renderScoreChart(ranking)}
       ${cards}
     </div>
@@ -266,7 +268,7 @@ async function evaluateSelection() {
       evaluationMode
     });
     renderEvaluationResult(result);
-    updateEvaluationStatus(`Response received: HTTP 200. Evaluator: ${result.evaluator}. Results: ${result.ranking?.length ?? 0}. Duration: ${result.durationMilliseconds} ms.`);
+    updateEvaluationStatus(`Response received: HTTP 200. Evaluator: ${result.effectiveEvaluator}. Fallback: ${result.fallbackUsed ? 'yes' : 'no'}. Results: ${result.ranking?.length ?? 0}. Duration: ${result.durationMilliseconds} ms.`);
     console.info('[UI] Evaluation results rendered');
   } catch (error) {
     console.error('[UI] Evaluation failed', error);

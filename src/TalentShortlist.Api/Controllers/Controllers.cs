@@ -61,6 +61,20 @@ public sealed class DemoController(IDemoDataService demoDataService) : Controlle
 }
 
 [ApiController]
+[Route("api/configuration")]
+public sealed class ConfigurationController(OpenAiSettings settings) : ControllerBase
+{
+    [HttpGet]
+    public IActionResult Get() => Ok(new
+    {
+        AiConfigured = !string.IsNullOrWhiteSpace(settings.ApiKey) && !string.IsNullOrWhiteSpace(settings.Model),
+        ApiKeyPresent = !string.IsNullOrWhiteSpace(settings.ApiKey),
+        Model = settings.Model,
+        Endpoint = settings.Endpoint
+    });
+}
+
+[ApiController]
 [Route("api/candidates")]
 public sealed class CandidatesController(ICandidateRepository repository) : ControllerBase
 {
@@ -97,7 +111,7 @@ public sealed class ShortlistsController(
             var response = await shortlistService.EvaluateAsync(request, cancellationToken);
             logger.LogInformation(
                 "Evaluation completed with evaluator {Evaluator}, {ResultCount} results in {DurationMilliseconds} ms",
-                response.Evaluator,
+                response.EffectiveEvaluator,
                 response.Ranking.Count,
                 response.DurationMilliseconds);
             return Ok(response);

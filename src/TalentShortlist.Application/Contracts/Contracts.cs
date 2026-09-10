@@ -21,16 +21,33 @@ public interface ICandidateEvaluator
 public interface IAiCandidateEvaluator
 {
     Task<IReadOnlyList<CandidateAssessment>> EvaluateAsync(
+        JobDescription jobDescription,
         RankingProfile rankingProfile,
         IReadOnlyCollection<CandidateDocument> candidates,
         CancellationToken cancellationToken);
 }
 
+public sealed class OpenAiEvaluationException : Exception
+{
+    public OpenAiEvaluationException(int statusCode, string errorType, string errorCode, string message)
+        : base(message)
+    {
+        StatusCode = statusCode;
+        ErrorType = errorType;
+        ErrorCode = errorCode;
+    }
+
+    public int StatusCode { get; }
+    public string ErrorType { get; }
+    public string ErrorCode { get; }
+}
+
 public sealed class OpenAiSettings
 {
     public string ApiKey { get; init; } = string.Empty;
-    public string Model { get; init; } = string.Empty;
+    public string Model { get; init; } = "gpt-5-mini";
     public string Endpoint { get; init; } = "https://api.openai.com/v1/chat/completions";
+    public int TimeoutSeconds { get; init; } = 60;
 }
 
 public interface ICvTextExtractor

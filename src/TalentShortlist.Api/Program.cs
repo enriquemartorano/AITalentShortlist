@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text.Json.Serialization;
 using TalentShortlist.Application.Contracts;
 using TalentShortlist.Application.Services;
 using TalentShortlist.Infrastructure.Demo;
@@ -7,9 +8,18 @@ using TalentShortlist.Infrastructure.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddHttpClient();
+var openAiSettings = new OpenAiSettings
+{
+    ApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? builder.Configuration["OpenAI:ApiKey"] ?? string.Empty,
+    Model = builder.Configuration["OpenAI:Model"] ?? "gpt-5-mini",
+    Endpoint = builder.Configuration["OpenAI:Endpoint"] ?? "https://api.openai.com/v1/chat/completions",
+    TimeoutSeconds = int.TryParse(builder.Configuration["OpenAI:TimeoutSeconds"], out var timeoutSeconds) ? timeoutSeconds : 60
+};
+builder.Services.AddSingleton(openAiSettings);
+builder.Services.AddHttpClient("OpenAI", client => client.Timeout = TimeSpan.FromSeconds(openAiSettings.TimeoutSeconds));
 builder.Services.AddCors(options => options.AddPolicy("LocalFrontend", policy =>
     policy.WithOrigins("http://localhost:5173")
         .AllowAnyHeader()
@@ -17,16 +27,7 @@ builder.Services.AddCors(options => options.AddPolicy("LocalFrontend", policy =>
 
 builder.Services.AddSingleton<ICandidateRepository, InMemoryCandidateRepository>();
 builder.Services.AddSingleton<ICandidateEvaluator, DeterministicCandidateEvaluator>();
-builder.Services.AddSingleton<IAiCandidateEvaluator>(serviceProvider =>
-    new OpenAiCandidateEvaluator(
-        serviceProvider.GetRequiredService<ICandidateEvaluator>(),
-        serviceProvider.GetRequiredService<ILogger<OpenAiCandidateEvaluator>>(),
-        new OpenAiSettings
-        {
-            ApiKey = builder.Configuration["OpenAI:ApiKey"] ?? string.Empty,
-            Model = builder.Configuration["OpenAI:Model"] ?? string.Empty,
-            Endpoint = builder.Configuration["OpenAI:Endpoint"] ?? "https://api.openai.com/v1/chat/completions"
-        }));
+builder.Services.AddSingleton<IAiCandidateEvaluator, OpenAiCandidateEvaluator>();
 builder.Services.AddSingleton<ICvTextExtractor, DemoCvTextExtractor>();
 builder.Services.AddSingleton<IDemoDataService, DemoDataService>();
 builder.Services.AddScoped<ShortlistService>();

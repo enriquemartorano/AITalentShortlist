@@ -202,6 +202,15 @@ h1 {
   color: #fecaca;
 }
 
+.fallback-warning {
+  margin-top: 0.75rem;
+  padding: 0.7rem;
+  border-left: 3px solid var(--warning);
+  border-radius: 0 8px 8px 0;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.1);
+}
+
 .candidate-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

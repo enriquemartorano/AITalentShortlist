@@ -34,15 +34,30 @@ public sealed class ShortlistService(
 
         var stopwatch = Stopwatch.StartNew();
         IReadOnlyList<CandidateAssessment> ranking;
-        var evaluatorName = "DeterministicCandidateEvaluator";
+        var effectiveEvaluator = "DeterministicCandidateEvaluator";
+        var fallbackUsed = false;
+        string? fallbackReason = null;
 
         if (request.EvaluationMode == EvaluationMode.Ai)
         {
-            ranking = await aiCandidateEvaluator.EvaluateAsync(
-                request.RankingProfile,
-                selectedCandidates,
-                cancellationToken);
-            evaluatorName = "OpenAiCandidateEvaluator";
+            try
+            {
+                ranking = await aiCandidateEvaluator.EvaluateAsync(
+                    request.JobDescription,
+                    request.RankingProfile,
+                    selectedCandidates,
+                    cancellationToken);
+                effectiveEvaluator = "OpenAI";
+            }
+            catch (OpenAiEvaluationException exception)
+            {
+                fallbackUsed = true;
+                fallbackReason = exception.Message;
+                ranking = await candidateEvaluator.EvaluateAsync(
+                    request.RankingProfile,
+                    selectedCandidates,
+                    cancellationToken);
+            }
         }
         else
         {
@@ -57,7 +72,10 @@ public sealed class ShortlistService(
         return new EvaluationResponseDto
         {
             Ranking = ranking,
-            Evaluator = evaluatorName,
+            RequestedMode = request.EvaluationMode,
+            EffectiveEvaluator = effectiveEvaluator,
+            FallbackUsed = fallbackUsed,
+            FallbackReason = fallbackReason,
             DurationMilliseconds = stopwatch.ElapsedMilliseconds
         };
     }
