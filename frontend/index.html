@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Talent Shortlist</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Demo UI</p>
+          <h1>AI Talent Shortlist</h1>
+        </div>
+        <button id="seedBtn" class="primary">Load demo candidates</button>
+      </header>
+
+      <main class="layout">
+        <section class="panel">
+          <h2>Job description</h2>
+          <div id="jobDescription" class="empty-state">No data yet.</div>
+        </section>
+
+        <section class="panel">
+          <h2>Ranking profile</h2>
+          <div id="rankingProfile" class="empty-state">No data yet.</div>
+        </section>
+
+        <section class="panel wide">
+          <div class="section-row">
+            <h2>Candidates</h2>
+            <div class="button-group">
+              <button id="loadCandidatesBtn" class="secondary">Reload</button>
+              <button id="clearCandidatesBtn" class="secondary danger">Clear candidates</button>
+            </div>
+          </div>
+          <div id="candidateList" class="candidate-list empty-state">No candidates.</div>
+        </section>
+
+        <section class="panel wide">
+          <div class="section-row">
+            <h2>Evaluation</h2>
+            <div class="mode-controls">
+              <label class="mode-select">
+                <span>Mode</span>
+                <select id="evaluationMode">
+                  <option value="heuristic">Heuristic</option>
+                  <option value="ai">AI</option>
+                </select>
+              </label>
+              <button id="evaluateBtn" class="primary">Evaluate selection</button>
+            </div>
+          </div>
+          <div id="evaluationResult" class="empty-state">Select candidates and click evaluate.</div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+## .NET build output
+bin/
+obj/
+TestResults/
+
+## Visual Studio and VS Code
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Local settings and secrets
+appsettings.Local.json
+.env
+.env.*
+!.env.example
+*.pfx
+*.publishsettings
+
+## Frontend dependencies and generated output
+node_modules/
+dist/
+coverage/
+
+## OS files
+.DS_Store
+Thumbs.db

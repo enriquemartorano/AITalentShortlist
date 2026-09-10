@@ -1,0 +1,12 @@
+{
+  "folders": [
+    { "path": "." }
+  ],
+  "settings": {
+    "dotnet.defaultSolution": "AITalentShortlist.sln",
+    "chat.tools.terminal.autoApprove": {
+      "dotnet run": true,
+      "dotnet test": true
+    }
+  }
+}
