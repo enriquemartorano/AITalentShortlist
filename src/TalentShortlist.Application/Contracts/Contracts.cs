@@ -26,6 +26,13 @@ public interface IAiCandidateEvaluator
         CancellationToken cancellationToken);
 }
 
+public sealed class OpenAiSettings
+{
+    public string ApiKey { get; init; } = string.Empty;
+    public string Model { get; init; } = string.Empty;
+    public string Endpoint { get; init; } = "https://api.openai.com/v1/chat/completions";
+}
+
 public interface ICvTextExtractor
 {
     Task<ExtractedCv> ExtractAsync(Stream document, string fileName, CancellationToken cancellationToken);

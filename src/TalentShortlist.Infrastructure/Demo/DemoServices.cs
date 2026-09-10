@@ -54,17 +54,16 @@ public sealed class DemoDataService(ICandidateRepository repository) : IDemoData
     }
 }
 
-public sealed class OpenAiCandidateEvaluator(ICandidateEvaluator fallbackEvaluator) : IAiCandidateEvaluator
+public sealed class OpenAiCandidateEvaluator(
+    ICandidateEvaluator fallbackEvaluator,
+    OpenAiSettings settings) : IAiCandidateEvaluator
 {
     public async Task<IReadOnlyList<CandidateAssessment>> EvaluateAsync(
         RankingProfile rankingProfile,
         IReadOnlyCollection<CandidateDocument> candidates,
         CancellationToken cancellationToken)
     {
-        var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-        var model = Environment.GetEnvironmentVariable("OPENAI_MODEL");
-
-        if (string.IsNullOrWhiteSpace(apiKey) || string.IsNullOrWhiteSpace(model))
+        if (string.IsNullOrWhiteSpace(settings.ApiKey) || string.IsNullOrWhiteSpace(settings.Model))
         {
             return await fallbackEvaluator.EvaluateAsync(rankingProfile, candidates, cancellationToken);
         }
@@ -72,13 +71,13 @@ public sealed class OpenAiCandidateEvaluator(ICandidateEvaluator fallbackEvaluat
         try
         {
             using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.ApiKey);
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             var prompt = BuildPrompt(rankingProfile, candidates);
             var payload = new
             {
-                model,
+                model = settings.Model,
                 temperature = 0.2,
                 response_format = new { type = "json_object" },
                 messages = new[]
@@ -96,7 +95,7 @@ public sealed class OpenAiCandidateEvaluator(ICandidateEvaluator fallbackEvaluat
                 }
             };
 
-            using var response = await httpClient.PostAsJsonAsync("https://api.openai.com/v1/chat/completions", payload, cancellationToken);
+            using var response = await httpClient.PostAsJsonAsync(settings.Endpoint, payload, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
                 return await fallbackEvaluator.EvaluateAsync(rankingProfile, candidates, cancellationToken);
