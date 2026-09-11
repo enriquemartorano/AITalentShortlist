@@ -112,7 +112,7 @@ public sealed class OpenAiCandidateEvaluator(
                 if (!response.IsSuccessStatusCode)
                 {
                     var error = await ReadErrorAsync(response, cancellationToken);
-                    if (ShouldRetry(response.StatusCode, attempts))
+                    if (ShouldRetry(response.StatusCode, attempts, settings.MaxAttempts))
                     {
                         await Task.Delay(TimeSpan.FromMilliseconds(250 * attempts), cancellationToken);
                         continue;
@@ -138,7 +138,7 @@ public sealed class OpenAiCandidateEvaluator(
 
                 return MapAndValidate(content, candidates);
             }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested && attempts < 3)
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested && attempts < settings.MaxAttempts)
             {
                 logger.LogWarning("OpenAI evaluation timed out on attempt {Attempt}; retrying", attempts);
                 await Task.Delay(TimeSpan.FromMilliseconds(250 * attempts), cancellationToken);
@@ -147,7 +147,7 @@ public sealed class OpenAiCandidateEvaluator(
             {
                 throw new OpenAiEvaluationException(504, "timeout", "request_timeout", "OpenAI request timed out.");
             }
-            catch (HttpRequestException exception) when (attempts < 3)
+            catch (HttpRequestException exception) when (attempts < settings.MaxAttempts)
             {
                 logger.LogWarning(exception, "OpenAI network error on attempt {Attempt}; retrying", attempts);
                 await Task.Delay(TimeSpan.FromMilliseconds(250 * attempts), cancellationToken);
@@ -159,8 +159,8 @@ public sealed class OpenAiCandidateEvaluator(
         }
     }
 
-    private static bool ShouldRetry(HttpStatusCode statusCode, int attempt) =>
-        attempt < 3 && (statusCode == HttpStatusCode.TooManyRequests || (int)statusCode >= 500);
+    private static bool ShouldRetry(HttpStatusCode statusCode, int attempt, int maxAttempts) =>
+        attempt < maxAttempts && (statusCode == HttpStatusCode.TooManyRequests || (int)statusCode >= 500);
 
     private static async Task<OpenAiError> ReadErrorAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {

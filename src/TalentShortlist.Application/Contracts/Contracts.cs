@@ -48,6 +48,7 @@ public sealed class OpenAiSettings
     public string Model { get; init; } = "gpt-5-mini";
     public string Endpoint { get; init; } = "https://api.openai.com/v1/chat/completions";
     public int TimeoutSeconds { get; init; } = 60;
+    public int MaxAttempts { get; init; } = 3;
 }
 
 public interface ICvTextExtractor

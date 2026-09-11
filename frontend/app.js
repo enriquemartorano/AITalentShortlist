@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:5080';
+const API_BASE = window.location.origin;
 
 const state = {
   jobDescription: null,

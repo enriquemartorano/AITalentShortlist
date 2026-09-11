@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.FileProviders;
 using TalentShortlist.Application.Contracts;
 using TalentShortlist.Application.Services;
 using TalentShortlist.Infrastructure.Demo;
@@ -17,7 +18,8 @@ var openAiSettings = new OpenAiSettings
     ApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? builder.Configuration["OpenAI:ApiKey"] ?? string.Empty,
     Model = builder.Configuration["OpenAI:Model"] ?? "gpt-5-mini",
     Endpoint = builder.Configuration["OpenAI:Endpoint"] ?? "https://api.openai.com/v1/chat/completions",
-    TimeoutSeconds = int.TryParse(builder.Configuration["OpenAI:TimeoutSeconds"], out var timeoutSeconds) ? timeoutSeconds : 60
+    TimeoutSeconds = int.TryParse(builder.Configuration["OpenAI:TimeoutSeconds"], out var timeoutSeconds) ? timeoutSeconds : 60,
+    MaxAttempts = int.TryParse(builder.Configuration["OpenAI:MaxAttempts"], out var maxAttempts) ? maxAttempts : 3
 };
 builder.Services.AddSingleton(openAiSettings);
 builder.Services.AddHttpClient("OpenAI", client => client.Timeout = TimeSpan.FromSeconds(openAiSettings.TimeoutSeconds));
@@ -34,6 +36,11 @@ builder.Services.AddSingleton<IDemoDataService, DemoDataService>();
 builder.Services.AddScoped<ShortlistService>();
 
 var app = builder.Build();
+
+var frontendPath = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "..", "..", "frontend"));
+var frontendProvider = new PhysicalFileProvider(frontendPath);
+app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = frontendProvider });
+app.UseStaticFiles(new StaticFileOptions { FileProvider = frontendProvider });
 
 app.Use(async (context, next) =>
 {
