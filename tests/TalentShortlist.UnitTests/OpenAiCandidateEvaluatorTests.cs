@@ -37,6 +37,23 @@ public sealed class OpenAiCandidateEvaluatorTests
     }
 
     [Fact]
+    public async Task MultipleCandidates_AreSentInSeparateRequests()
+    {
+        var handler = new FakeHttpMessageHandler(request =>
+        {
+            var requestBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            Assert.Equal(1, requestBody.Split("cvText=").Length - 1);
+            return ErrorResponse(HttpStatusCode.Unauthorized, "invalid_api_key", "invalid_api_key", "The API key is invalid.");
+        });
+        var evaluator = CreateEvaluator(handler, "configured-key");
+
+        await Assert.ThrowsAsync<OpenAiEvaluationException>(() => evaluator.EvaluateAsync(
+            CreateJob(), CreateProfile(), [CreateCandidate(), CreateCandidate()], CancellationToken.None));
+
+        Assert.Equal(2, handler.CallCount);
+    }
+
+    [Fact]
     public async Task RateLimitResponse_RetriesThenThrows()
     {
         var handler = new FakeHttpMessageHandler(_ => ErrorResponse(HttpStatusCode.TooManyRequests, "rate_limit_exceeded", "rate_limit_exceeded", "Too many requests."));
@@ -128,6 +145,8 @@ public sealed class OpenAiCandidateEvaluatorTests
         Assert.Contains("json_schema", requestBody);
         Assert.Contains("\"strict\":true", requestBody);
         Assert.Contains("\"additionalProperties\":false", requestBody);
+        Assert.Contains("\"reasoning_effort\":\"low\"", requestBody);
+        Assert.Contains("\"max_completion_tokens\":8000", requestBody);
     }
 
     private static OpenAiCandidateEvaluator CreateEvaluator(FakeHttpMessageHandler handler, string apiKey)
@@ -190,11 +209,13 @@ public sealed class OpenAiCandidateEvaluatorTests
 
     private sealed class FakeHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder) : HttpMessageHandler
     {
-        public int CallCount { get; private set; }
+        private int callCount;
+
+        public int CallCount => callCount;
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            CallCount++;
+            Interlocked.Increment(ref callCount);
             return Task.FromResult(responder(request));
         }
     }

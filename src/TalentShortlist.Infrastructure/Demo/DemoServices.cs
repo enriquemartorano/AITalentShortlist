@@ -74,12 +74,33 @@ public sealed class OpenAiCandidateEvaluator(
             throw new OpenAiEvaluationException(503, "configuration_error", "openai_not_configured", "OpenAI is not configured.");
         }
 
+        var evaluations = await Task.WhenAll(candidates.Select(candidate => EvaluateBatchAsync(
+            jobDescription,
+            rankingProfile,
+            [candidate],
+            cancellationToken)));
+
+        return evaluations
+            .SelectMany(evaluation => evaluation)
+            .OrderByDescending(assessment => assessment.TotalScore)
+            .ToArray();
+    }
+
+    private async Task<IReadOnlyList<CandidateAssessment>> EvaluateBatchAsync(
+        JobDescription jobDescription,
+        RankingProfile rankingProfile,
+        IReadOnlyCollection<CandidateDocument> candidates,
+        CancellationToken cancellationToken)
+    {
+
         var client = httpClientFactory.CreateClient("OpenAI");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.ApiKey);
         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         var payload = new
         {
             model = settings.Model,
+            reasoning_effort = settings.ReasoningEffort,
+            max_completion_tokens = settings.MaxCompletionTokens,
             response_format = new
             {
                 type = "json_schema",

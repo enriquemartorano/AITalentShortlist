@@ -49,6 +49,8 @@ public sealed class OpenAiSettings
     public string Endpoint { get; init; } = "https://api.openai.com/v1/chat/completions";
     public int TimeoutSeconds { get; init; } = 60;
     public int MaxAttempts { get; init; } = 3;
+    public string ReasoningEffort { get; init; } = "low";
+    public int MaxCompletionTokens { get; init; } = 8000;
 }
 
 public interface ICvTextExtractor

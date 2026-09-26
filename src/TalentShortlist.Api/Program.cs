@@ -19,7 +19,9 @@ var openAiSettings = new OpenAiSettings
     Model = builder.Configuration["OpenAI:Model"] ?? "gpt-5-mini",
     Endpoint = builder.Configuration["OpenAI:Endpoint"] ?? "https://api.openai.com/v1/chat/completions",
     TimeoutSeconds = int.TryParse(builder.Configuration["OpenAI:TimeoutSeconds"], out var timeoutSeconds) ? timeoutSeconds : 60,
-    MaxAttempts = int.TryParse(builder.Configuration["OpenAI:MaxAttempts"], out var maxAttempts) ? maxAttempts : 3
+    MaxAttempts = int.TryParse(builder.Configuration["OpenAI:MaxAttempts"], out var maxAttempts) ? maxAttempts : 3,
+    ReasoningEffort = builder.Configuration["OpenAI:ReasoningEffort"] ?? "low",
+    MaxCompletionTokens = int.TryParse(builder.Configuration["OpenAI:MaxCompletionTokens"], out var maxCompletionTokens) ? maxCompletionTokens : 8000
 };
 builder.Services.AddSingleton(openAiSettings);
 builder.Services.AddHttpClient("OpenAI", client => client.Timeout = TimeSpan.FromSeconds(openAiSettings.TimeoutSeconds));
