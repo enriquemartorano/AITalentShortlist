@@ -27,4 +27,6 @@ public sealed class EvaluationResponseDto
     public string PromptVersion { get; init; } = "candidate-ranking-v1";
     public bool HumanReviewRequired { get; init; } = true;
     public long DurationMilliseconds { get; init; }
+    public string? SystemPrompt { get; init; }
+    public string? UserPrompt { get; init; }
 }

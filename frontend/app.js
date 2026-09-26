@@ -11,6 +11,9 @@ const rankingProfileEl = document.getElementById('rankingProfile');
 const candidateListEl = document.getElementById('candidateList');
 const evaluationResultEl = document.getElementById('evaluationResult');
 const evaluationStatusEl = document.getElementById('evaluationStatus');
+const promptPanelEl = document.getElementById('promptPanel');
+const systemPromptEl = document.getElementById('systemPrompt');
+const userPromptEl = document.getElementById('userPrompt');
 
 const seedBtn = document.getElementById('seedBtn');
 const loadCandidatesBtn = document.getElementById('loadCandidatesBtn');
@@ -163,6 +166,9 @@ function renderEvaluationResult(result) {
   }
 
   const ranking = result.ranking || [];
+  promptPanelEl.hidden = !result.systemPrompt || !result.userPrompt;
+  systemPromptEl.textContent = result.systemPrompt || '';
+  userPromptEl.textContent = result.userPrompt || '';
   const cards = ranking
     .map((candidate) => {
       const recommendation = candidate.recommendation;

@@ -197,6 +197,42 @@ h1 {
   font-size: 0.82rem;
 }
 
+.prompt-panel {
+  margin-top: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.65);
+}
+
+.prompt-panel summary {
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.prompt-section {
+  padding: 0 1rem 1rem;
+}
+
+.prompt-section h3 {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.prompt-section pre {
+  max-height: 360px;
+  margin: 0;
+  padding: 0.9rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #cbd5e1;
+  background: rgba(2, 8, 23, 0.8);
+  border-radius: 8px;
+  font: 0.8rem/1.5 Consolas, "Courier New", monospace;
+}
+
 .activity-log.error {
   border-left-color: var(--danger);
   color: #fecaca;

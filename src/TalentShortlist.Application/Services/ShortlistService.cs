@@ -77,6 +77,10 @@ public sealed class ShortlistService(
             FallbackUsed = fallbackUsed,
             FallbackReason = fallbackReason,
             DurationMilliseconds = stopwatch.ElapsedMilliseconds
+            ,SystemPrompt = request.EvaluationMode == EvaluationMode.Ai ? CandidateEvaluationPrompt.System : null
+            ,UserPrompt = request.EvaluationMode == EvaluationMode.Ai
+                ? CandidateEvaluationPrompt.BuildUserPrompt(request.JobDescription, request.RankingProfile, selectedCandidates)
+                : null
         };
     }
 }

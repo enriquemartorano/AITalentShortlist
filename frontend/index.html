@@ -56,6 +56,17 @@
             </div>
           </div>
           <div id="evaluationResult" class="empty-state">Select candidates and click evaluate.</div>
+          <details id="promptPanel" class="prompt-panel" hidden>
+            <summary>Show prompt sent to AI</summary>
+            <div class="prompt-section">
+              <h3>System message</h3>
+              <pre id="systemPrompt"></pre>
+            </div>
+            <div class="prompt-section">
+              <h3>User message</h3>
+              <pre id="userPrompt"></pre>
+            </div>
+          </details>
           <div id="evaluationStatus" class="activity-log" role="status" aria-live="polite">
             <strong>Activity:</strong> Ready.
           </div>

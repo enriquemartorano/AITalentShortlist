@@ -49,6 +49,7 @@ public sealed class DemoController(IDemoDataService demoDataService) : Controlle
     {
         Name = "Default ranking strategy",
         Instructions = "Evaluate professional evidence only. Human review is required.",
+        AnonymizeCandidates = true,
         Criteria =
         [
             new() { Name = "Microsoft 365 and Power Platform", Weight = 35, IsMandatory = true, Keywords = ["SharePoint Online", "Power Platform", "Power Automate"] },
