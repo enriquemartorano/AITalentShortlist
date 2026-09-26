@@ -166,8 +166,21 @@ function renderEvaluationResult(result) {
   const cards = ranking
     .map((candidate) => {
       const recommendation = candidate.recommendation;
-      const badgeClass = recommendation === 0 ? 'match' : recommendation === 1 ? 'review' : 'low';
-      const recommendationLabel = recommendation === 0 ? 'Strong Match' : recommendation === 1 ? 'Potential Match' : recommendation === 2 ? 'Review Required' : 'Not Recommended';
+      const recommendationKey = typeof recommendation === 'string'
+        ? recommendation
+        : ['StrongMatch', 'PotentialMatch', 'ReviewRequired', 'NotRecommended'][recommendation];
+      const badgeClass = recommendationKey === 'StrongMatch'
+        ? 'match'
+        : recommendationKey === 'PotentialMatch'
+          ? 'review'
+          : 'low';
+      const recommendationLabel = recommendationKey === 'StrongMatch'
+        ? 'Strong Match'
+        : recommendationKey === 'PotentialMatch'
+          ? 'Potential Match'
+          : recommendationKey === 'ReviewRequired'
+            ? 'Review Required'
+            : 'Not Recommended';
       const strengths = (candidate.strengths || []).map((item) => `<li>${item}</li>`).join('');
       const gaps = (candidate.gaps || []).map((item) => `<li>${item}</li>`).join('');
       return `
