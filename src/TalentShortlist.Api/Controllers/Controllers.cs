@@ -3,6 +3,7 @@ using TalentShortlist.Application.Contracts;
 using TalentShortlist.Application.DTOs;
 using TalentShortlist.Application.Services;
 using TalentShortlist.Domain.Entities;
+using TalentShortlist.Api.JobDescriptions;
 
 namespace TalentShortlist.Api.Controllers;
 
@@ -22,7 +23,7 @@ public sealed class HealthController : ControllerBase
 
 [ApiController]
 [Route("api/demo")]
-public sealed class DemoController(IDemoDataService demoDataService) : ControllerBase
+public sealed class DemoController(IDemoDataService demoDataService, JobDescriptionCatalog catalog) : ControllerBase
 {
     [HttpPost("seed")]
     public async Task<IActionResult> SeedAsync(CancellationToken cancellationToken)
@@ -32,24 +33,14 @@ public sealed class DemoController(IDemoDataService demoDataService) : Controlle
     }
 
     [HttpGet("job-description")]
-    public IActionResult GetJobDescription() => Ok(new JobDescription
-    {
-        Title = "Senior Microsoft 365 & Power Platform Specialist",
-        Department = "IT",
-        Location = "Hybrid",
-        Description = "Lead secure Microsoft 365 and Power Platform solution delivery.",
-        RequiredSkills = ["SharePoint Online", "Power Platform", "Power Automate", "Microsoft Graph", "Azure"],
-        PreferredSkills = ["Solution Architecture", "Governance", "Security"],
-        RequiredLanguages = ["English"],
-        MinimumYearsOfExperience = 5
-    });
+    public IActionResult GetJobDescription() => Ok(catalog.Get("sharepoint-specialist"));
 
     [HttpGet("ranking-profile")]
     public IActionResult GetRankingProfile() => Ok(new RankingProfile
     {
         Name = "Default ranking strategy",
         Instructions = "Evaluate professional evidence only. Human review is required.",
-        AnonymizeCandidates = true,
+        AnonymizeCandidates = false,
         Criteria =
         [
             new() { Name = "Microsoft 365 and Power Platform", Weight = 35, IsMandatory = true, Keywords = ["SharePoint Online", "Power Platform", "Power Automate"] },
@@ -59,6 +50,31 @@ public sealed class DemoController(IDemoDataService demoDataService) : Controlle
             new() { Name = "Leadership", Weight = 10, Keywords = ["Leadership", "Lead"] }
         ]
     });
+}
+
+[ApiController]
+[Route("api/job-descriptions")]
+public sealed class JobDescriptionsController(JobDescriptionCatalog catalog) : ControllerBase
+{
+    [HttpGet]
+    public IActionResult List() => Ok(catalog.List());
+
+    [HttpGet("{id}")]
+    public IActionResult Get(string id)
+    {
+        try
+        {
+            return Ok(catalog.Get(id));
+        }
+        catch (FileNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ArgumentException)
+        {
+            return BadRequest();
+        }
+    }
 }
 
 [ApiController]

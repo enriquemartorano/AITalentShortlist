@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Talent Shortlist</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=3" />
   </head>
   <body>
     <div class="app-shell">
@@ -21,7 +21,15 @@
 
       <main class="layout">
         <section class="panel">
-          <h2>Job description</h2>
+          <div class="section-row compact">
+            <h2>Job description</h2>
+            <label class="job-select">
+              <span>Position</span>
+              <select id="jobDescriptionSelect" disabled>
+                <option>Loading...</option>
+              </select>
+            </label>
+          </div>
           <div id="jobDescription" class="empty-state">No data yet.</div>
         </section>
 
@@ -55,6 +63,9 @@
               <button id="evaluateBtn" class="primary">Evaluate selection</button>
             </div>
           </div>
+          <div id="evaluationStatus" class="activity-log" role="status" aria-live="polite">
+            <strong>Activity:</strong> Ready.
+          </div>
           <div id="evaluationResult" class="empty-state">Select candidates and click evaluate.</div>
           <details id="promptPanel" class="prompt-panel" hidden>
             <summary>Show prompt sent to AI</summary>
@@ -67,13 +78,10 @@
               <pre id="userPrompt"></pre>
             </div>
           </details>
-          <div id="evaluationStatus" class="activity-log" role="status" aria-live="polite">
-            <strong>Activity:</strong> Ready.
-          </div>
         </section>
       </main>
     </div>
 
-    <script src="app.js?v=2"></script>
+    <script src="app.js?v=3"></script>
   </body>
 </html>

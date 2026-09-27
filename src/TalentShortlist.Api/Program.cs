@@ -5,6 +5,8 @@ using TalentShortlist.Application.Contracts;
 using TalentShortlist.Application.Services;
 using TalentShortlist.Infrastructure.Demo;
 using TalentShortlist.Infrastructure.Repositories;
+using TalentShortlist.Api.JobDescriptions;
+using TalentShortlist.Api.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false);
@@ -35,6 +37,8 @@ builder.Services.AddSingleton<ICandidateEvaluator, DeterministicCandidateEvaluat
 builder.Services.AddSingleton<IAiCandidateEvaluator, OpenAiCandidateEvaluator>();
 builder.Services.AddSingleton<ICvTextExtractor, DemoCvTextExtractor>();
 builder.Services.AddSingleton<IDemoDataService, DemoDataService>();
+builder.Services.AddSingleton<JobDescriptionCatalog>();
+builder.Services.AddSingleton<EvaluationRateLimiter>();
 builder.Services.AddScoped<ShortlistService>();
 
 var app = builder.Build();
@@ -67,6 +71,23 @@ app.Use(async (context, next) =>
 });
 
 app.UseCors("LocalFrontend");
+app.Use(async (context, next) =>
+{
+    if (HttpMethods.IsPost(context.Request.Method) && context.Request.Path.Equals("/api/shortlists/evaluate"))
+    {
+        var limiter = context.RequestServices.GetRequiredService<EvaluationRateLimiter>();
+        var ipAddress = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        if (!limiter.TryAcquire(ipAddress, out var reason))
+        {
+            context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+            context.Response.Headers.RetryAfter = "3600";
+            await context.Response.WriteAsJsonAsync(new { title = "Evaluation rate limit exceeded", detail = reason });
+            return;
+        }
+    }
+
+    await next();
+});
 app.MapControllers();
 app.Run();
 

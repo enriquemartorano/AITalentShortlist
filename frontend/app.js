@@ -7,6 +7,7 @@ const state = {
 };
 
 const jobDescriptionEl = document.getElementById('jobDescription');
+const jobDescriptionSelectEl = document.getElementById('jobDescriptionSelect');
 const rankingProfileEl = document.getElementById('rankingProfile');
 const candidateListEl = document.getElementById('candidateList');
 const evaluationResultEl = document.getElementById('evaluationResult');
@@ -90,6 +91,16 @@ function renderJobDescription() {
     <div><strong>Preferred skills:</strong> ${preferredSkills.join(', ')}</div>
     <div><strong>Languages:</strong> ${requiredLanguages.join(', ')}</div>
   `;
+}
+
+function renderJobDescriptionOptions(descriptions) {
+  jobDescriptionSelectEl.innerHTML = descriptions
+    .map((description) => `<option value="${description.id}">${description.title}</option>`)
+    .join('');
+  jobDescriptionSelectEl.disabled = descriptions.length === 0;
+  if (state.jobDescription && descriptions.some((description) => description.id === state.jobDescription.id)) {
+    jobDescriptionSelectEl.value = state.jobDescription.id;
+  }
 }
 
 function renderRankingProfile() {
@@ -233,7 +244,7 @@ async function loadDemoData() {
     seedBtn.disabled = true;
     await api.post('/api/demo/seed', {});
     await Promise.all([
-      loadJobDescription(),
+      loadJobDescriptions(),
       loadRankingProfile(),
       loadCandidates()
     ]);
@@ -244,8 +255,18 @@ async function loadDemoData() {
   }
 }
 
-async function loadJobDescription() {
-  state.jobDescription = await api.get('/api/demo/job-description');
+async function loadJobDescriptions() {
+  const descriptions = await api.get('/api/job-descriptions');
+  renderJobDescriptionOptions(descriptions);
+  if (descriptions.length) {
+    await loadJobDescription(descriptions[0].id);
+  }
+}
+
+async function loadJobDescription(id) {
+  state.jobDescription = await api.get(`/api/job-descriptions/${encodeURIComponent(id)}`);
+  state.jobDescription.id = id;
+  jobDescriptionSelectEl.value = id;
   renderJobDescription();
 }
 
@@ -300,6 +321,7 @@ async function evaluateSelection() {
 }
 
 seedBtn.addEventListener('click', loadDemoData);
+jobDescriptionSelectEl.addEventListener('change', () => loadJobDescription(jobDescriptionSelectEl.value));
 loadCandidatesBtn.addEventListener('click', loadCandidates);
 clearCandidatesBtn.addEventListener('click', clearCandidates);
 evaluateBtn.addEventListener('click', evaluateSelection);
@@ -309,7 +331,7 @@ updateActiveModeBadge();
 (async () => {
   try {
     await Promise.all([
-      loadJobDescription(),
+      loadJobDescriptions(),
       loadRankingProfile(),
       loadCandidates()
     ]);

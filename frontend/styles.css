@@ -143,6 +143,27 @@ h1 {
   margin-bottom: 1rem;
 }
 
+.section-row.compact {
+  align-items: flex-start;
+}
+
+.job-select {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.job-select select {
+  max-width: 280px;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--text);
+}
+
 .button-group {
   display: flex;
   gap: 0.75rem;
@@ -377,8 +398,17 @@ pre {
 }
 
 @media (max-width: 800px) {
+  body {
+    min-width: 0;
+  }
+
+  .app-shell {
+    padding: 1rem 0.75rem 2rem;
+  }
+
   .layout {
     grid-template-columns: 1fr;
+    gap: 0.9rem;
   }
 
   .panel.wide {
@@ -393,5 +423,81 @@ pre {
 
   .topbar-actions {
     justify-content: flex-start;
+    width: 100%;
+  }
+
+  .topbar-actions button,
+  .topbar-actions .mode-badge {
+    flex: 1 1 auto;
+  }
+
+  .panel {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .section-row.compact,
+  .mode-controls,
+  .job-select,
+  .button-group {
+    width: 100%;
+  }
+
+  .job-select,
+  .mode-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .job-select select,
+  .mode-select,
+  .mode-select select,
+  .mode-controls button,
+  .button-group button,
+  .job-select {
+    width: 100%;
+    max-width: none;
+  }
+
+  button,
+  .mode-select select,
+  .job-select select {
+    min-height: 44px;
+  }
+
+  .candidate-list {
+    grid-template-columns: 1fr;
+  }
+
+  .score-line,
+  .score-label {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .score-label {
+    display: flex;
+  }
+
+  .result-card,
+  .chart-panel,
+  .prompt-section pre {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .prompt-section pre {
+    max-height: 280px;
+    font-size: 0.74rem;
+  }
+}
+
+@media (max-width: 380px) {
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  .eyebrow {
+    font-size: 0.68rem;
   }
 }

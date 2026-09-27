@@ -1,0 +1,20 @@
+Title: Senior Microsoft 365 & SharePoint Specialist
+Department: IT
+Location: Hybrid
+MinimumYearsOfExperience: 5
+Description: Lead the design, delivery, and governance of secure Microsoft 365 and SharePoint Online solutions for business teams. Partner with stakeholders to translate requirements into scalable collaboration, automation, and content management capabilities.
+RequiredSkills:
+- SharePoint Online
+- Microsoft 365
+- Power Platform
+- Power Automate
+- Microsoft Graph
+- Azure
+PreferredSkills:
+- Solution Architecture
+- Information Architecture
+- Governance
+- Security
+- Stakeholder Management
+RequiredLanguages:
+- English
